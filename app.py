@@ -9,7 +9,7 @@ bikeRent_df = pd.read_csv('hour.csv')
 bikeRent_df['day_type'] = bikeRent_df.apply(lambda row: 'Holiday' if row['holiday'] == 1 
                                             else ('Work Day' if row['workingday'] == 1 else 'Weekend'), axis=1)
 
-st.title("Rent Bike Interactive Dashboard")
+st.title("Rent Bike Analysis Dashboard")
 
 st.sidebar.header("Filter Options")
 
