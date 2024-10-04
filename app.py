@@ -9,20 +9,30 @@ bikeRent_df = pd.read_csv('hour.csv')
 bikeRent_df['day_type'] = bikeRent_df.apply(lambda row: 'Holiday' if row['holiday'] == 1 
                                             else ('Work Day' if row['workingday'] == 1 else 'Weekend'), axis=1)
 
+# Mapping untuk musim
+season_mapping = {1: 'Spring', 2: 'Summer', 3: 'Fall', 4: 'Winter'}
+bikeRent_df['season_name'] = bikeRent_df['season'].map(season_mapping)
+
+# Judul Dashboard
 st.title("Rent Bike Analysis Dashboard")
 
+# Sidebar untuk filter
 st.sidebar.header("Filter Options")
 
+# Opsi untuk memilih musim (nama musim)
 season_options = st.sidebar.multiselect(
     'Select season(s) to view:',
-    options=bikeRent_df['season'].unique(),
-    default=bikeRent_df['season'].unique()
+    options=bikeRent_df['season_name'].unique(),
+    default=bikeRent_df['season_name'].unique()
 )
 
+# Slider untuk memilih jam
 hour = st.sidebar.slider("Select the hour of the day:", min_value=0, max_value=23, value=(0, 23))
 
-filtered_data = bikeRent_df[(bikeRent_df['season'].isin(season_options)) & (bikeRent_df['hr'].between(hour[0], hour[1]))]
+# Filter data berdasarkan musim dan jam yang dipilih
+filtered_data = bikeRent_df[(bikeRent_df['season_name'].isin(season_options)) & (bikeRent_df['hr'].between(hour[0], hour[1]))]
 
+# Menampilkan data mentah jika diaktifkan
 if st.sidebar.checkbox("Show raw data"):
     st.write(filtered_data)
 
@@ -33,18 +43,18 @@ tab1, tab2 = st.tabs(["Season Analysis", "Day Type Analysis"])
 with tab1:
     st.header("Average Rentals by Season")
     
-    # Filter data based on season selection
-    filtered_season_data = bikeRent_df[bikeRent_df['season'].isin(season_options)]
+    # Filter data berdasarkan musim
+    filtered_season_data = bikeRent_df[bikeRent_df['season_name'].isin(season_options)]
 
     # Visualization for season
     if len(season_options) > 0:
-        avg_casual_registered_season = filtered_season_data.groupby('season')[['casual', 'registered']].mean().reset_index()
+        avg_casual_registered_season = filtered_season_data.groupby('season_name')[['casual', 'registered']].mean().reset_index()
         
         # Plot bar chart for casual and registered users by season
         fig, ax = plt.subplots(figsize=(10, 5))
-        avg_casual_registered_season.plot(kind='bar', x='season', y=['casual', 'registered'], ax=ax, color=['blue', 'green'])
+        avg_casual_registered_season.plot(kind='bar', x='season_name', y=['casual', 'registered'], ax=ax, color=['blue', 'green'])
         plt.title("Average Rentals by Season")
-        plt.xlabel("Season (1=Spring, 2=Summer, 3=Fall, 4=Winter)")
+        plt.xlabel("Season")
         plt.ylabel("Average Number of Rentals")
         st.pyplot(fig)
     
@@ -56,18 +66,18 @@ with tab1:
     st.subheader("ANOVA Test for Season")
     if len(season_options) == 4:
         anova_casual_season = stats.f_oneway(
-            filtered_season_data[filtered_season_data['season'] == 1]['casual'],
-            filtered_season_data[filtered_season_data['season'] == 2]['casual'],
-            filtered_season_data[filtered_season_data['season'] == 3]['casual'],
-            filtered_season_data[filtered_season_data['season'] == 4]['casual']
+            filtered_season_data[filtered_season_data['season_name'] == 'Spring']['casual'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Summer']['casual'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Fall']['casual'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Winter']['casual']
         )
         st.write(f"ANOVA for Casual Users by Season: F-statistic = {anova_casual_season.statistic:.5f}, p-value = {anova_casual_season.pvalue:.5f}")
         
         anova_registered_season = stats.f_oneway(
-            filtered_season_data[filtered_season_data['season'] == 1]['registered'],
-            filtered_season_data[filtered_season_data['season'] == 2]['registered'],
-            filtered_season_data[filtered_season_data['season'] == 3]['registered'],
-            filtered_season_data[filtered_season_data['season'] == 4]['registered']
+            filtered_season_data[filtered_season_data['season_name'] == 'Spring']['registered'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Summer']['registered'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Fall']['registered'],
+            filtered_season_data[filtered_season_data['season_name'] == 'Winter']['registered']
         )
         st.write(f"ANOVA for Registered Users by Season: F-statistic = {anova_registered_season.statistic:.5f}, p-value = {anova_registered_season.pvalue:.5f}")
     else:
